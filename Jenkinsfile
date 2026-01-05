@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo ' Checking if index.html exists...'
                 bat '''
-                    if exist index.html (
+                    if exist views/index.html (
                         echo  index.html found.
                     ) else (
                         echo  index.html not found.
