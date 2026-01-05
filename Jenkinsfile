@@ -10,14 +10,14 @@ pipeline {
     }
 
     stages {
-        stage('Verify README.md') {
+        stage('Verify index.html') {
             steps {
-                echo ' Checking if README.md exists...'
+                echo ' Checking if index.html exists...'
                 bat '''
-                    if exist README.md (
-                        echo  README.md found.
+                    if exist index.html (
+                        echo  index.html found.
                     ) else (
-                        echo  README.md not found.
+                        echo  index.html not found.
                         exit /b 1
                     )
                 '''
