@@ -30,11 +30,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir('backend') {
-                    bat 'docker build -t %IMAGE_NAME% .'
+                bat 'docker build -t %IMAGE_NAME% -f Dockerfile .'
                 }
             }
-        }
 
         stage('Docker Login') {
             steps {
