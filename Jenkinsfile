@@ -5,6 +5,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'aarthidevops'
         IMAGE_NAME = 'get-post-file'
         CREDENTIALS_ID = 'dockerhub-aarthi-id'
+        KUBECONFIG = 'C:\\ProgramData\\Jenkins\\.kube\\config'  // Jenkins-accessible kubeconfig
     }
 
     triggers {
@@ -55,11 +56,21 @@ pipeline {
 
         stage('Deploy Pod & Service to Kubernetes') {
             steps {
-                bat '''
+                bat """
+                REM Set kubeconfig for Jenkins
+                set KUBECONFIG=%KUBECONFIG%
+
+                REM Delete old pod
                 kubectl delete pod getpost-pod --ignore-not-found
+
+                REM Apply Pod and Service
                 kubectl apply -f pod.yaml
                 kubectl apply -f service.yaml
-                '''
+
+                REM Optional: verify deployment
+                kubectl get pods
+                kubectl get svc
+                """
             }
         }
     }
