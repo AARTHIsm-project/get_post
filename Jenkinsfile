@@ -2,43 +2,34 @@ pipeline {
     agent any
 
     environment {
-        PORT = '3000'
         DOCKERHUB_USERNAME = 'aarthidevops'
         IMAGE_NAME = 'get-post-file'
         CREDENTIALS_ID = 'dockerhub-aarthi-id'
     }
 
     triggers {
-        pollSCM('H/2 * * * *') // Poll every 2 minutes
+        pollSCM('H/2 * * * *')
     }
 
     stages {
 
-        stage('Verify index.html') {
+        stage('Checkout Code') {
             steps {
-                echo 'Checking if index.html exists...'
-                bat '''
-                    if exist views\\index.html (
-                        echo index.html found.
-                    ) else (
-                        echo index.html not found.
-                        exit /b 1
-                    )
-                '''
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 bat 'docker build -t %IMAGE_NAME% -f Dockerfile .'
-                }
             }
+        }
 
         stage('Docker Login') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-aarthi-id',
+                        credentialsId: "${CREDENTIALS_ID}",
                         usernameVariable: 'DOCKERHUB_USER',
                         passwordVariable: 'DOCKERHUB_PASS'
                     )
@@ -48,49 +39,37 @@ pipeline {
             }
         }
 
-        stage('Tag Image') {
+        stage('Tag Docker Image') {
             steps {
                 bat 'docker tag %IMAGE_NAME% %DOCKERHUB_USERNAME%/%IMAGE_NAME%:%BUILD_NUMBER%'
                 bat 'docker tag %IMAGE_NAME% %DOCKERHUB_USERNAME%/%IMAGE_NAME%:latest'
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Push Image to DockerHub') {
             steps {
                 bat 'docker push %DOCKERHUB_USERNAME%/%IMAGE_NAME%:%BUILD_NUMBER%'
                 bat 'docker push %DOCKERHUB_USERNAME%/%IMAGE_NAME%:latest'
             }
         }
 
-        stage('Build App') {
+        stage('Deploy Pod & Service to Kubernetes') {
             steps {
-                echo 'Installing dependencies'
-                bat 'npm install'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Running tests'
-                bat 'npm test || echo No tests found, skipping...'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo "Deploying application on port ${PORT}"
-                bat "start /B npm start -- --port ${PORT}"
-                echo "Server running at http://localhost:${PORT}"
+                bat '''
+                kubectl delete pod getpost-pod --ignore-not-found
+                kubectl apply -f pod.yaml
+                kubectl apply -f service.yaml
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Jenkins → Docker → Kubernetes pipeline completed successfully'
         }
         failure {
-            echo 'Pipeline failed. Check logs for details.'
+            echo 'Pipeline failed'
         }
     }
 }

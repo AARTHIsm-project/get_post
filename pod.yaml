@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: get-post-pod
+  labels:
+    app: get-post
+spec:
+  containers:
+    - name: get-post-container
+      image: aarthidevops/get-post-file:latest
+      ports:
+        - containerPort: 4000
