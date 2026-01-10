@@ -5,8 +5,9 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: student-app
+    app: get-post        # MUST MATCH POD
   ports:
-    - port: 80
-      targetPort: 80
+    - protocol: TCP
+      port: 80
+      targetPort: 3000   # or 80 based on your app
       nodePort: 30007
