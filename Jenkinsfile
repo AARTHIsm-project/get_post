@@ -5,9 +5,9 @@ pipeline {
         DOCKERHUB_USERNAME = 'aarthidevops'
         IMAGE_NAME = 'get-post-file'
         CREDENTIALS_ID = 'dockerhub-aarthi-id'
-        SONAR_TOKEN_ID = 'sonar-token-id'
+        SONAR_TOKEN_ID = 'sonar-token'
         SONAR_PROJECT_KEY = 'get-post-file'
-        SONAR_HOST_NAME = 'MySonarQubeServer'  // Name configured in Jenkins SonarQube settings
+        SONAR_HOST_NAME = 'SonarQube'  // Name configured in Jenkins SonarQube settings
     }
 
     triggers {
