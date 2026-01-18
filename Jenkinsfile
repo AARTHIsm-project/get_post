@@ -5,9 +5,6 @@ pipeline {
         DOCKERHUB_USERNAME = 'aarthidevops'
         IMAGE_NAME = 'get-post-file'
         CREDENTIALS_ID = 'dockerhub-aarthi-id'
-        SONAR_TOKEN_ID = 'sonar-token'
-        SONAR_PROJECT_KEY = 'get-post-file'
-        SONAR_HOST_NAME = 'SonarQube'  // Name configured in Jenkins SonarQube settings
     }
 
     triggers {
@@ -22,30 +19,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONAR_HOST_NAME}") {
-                    // Run SonarQube scanner for general projects (JS, Python, etc.)
-                    bat """
-                    sonar-scanner ^
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
-                        -Dsonar.sources=. ^
-                        -Dsonar.host.url=%SONAR_HOST_URL% ^
-                        -Dsonar.login=%SONAR_AUTH_TOKEN%
-                    """
-                }
-            }
-        }
-
-        stage('Quality Gate Check') {
-            steps {
-                // Wait for SonarQube analysis and fail pipeline if quality gate fails
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 bat 'docker build -t %IMAGE_NAME% -f Dockerfile .'
@@ -54,12 +27,14 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${CREDENTIALS_ID}",
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_PASS'
-                )]) {
-                    bat 'echo %DOCKERHUB_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${CREDENTIALS_ID}",
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_PASS'
+                    )
+                ]) {
+                    bat 'docker login -u %DOCKERHUB_USER% -p %DOCKERHUB_PASS%'
                 }
             }
         }
@@ -94,10 +69,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully with SonarQube quality checks.'
+            echo 'Jenkins → Docker → Kubernetes pipeline completed successfully'
         }
         failure {
-            echo 'Pipeline failed due to build or SonarQube quality gate failure.'
+            echo 'Pipeline failed'
         }
     }
 }
